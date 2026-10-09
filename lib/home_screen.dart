@@ -10,20 +10,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<List<UseModel>> usersFuture;
+  Stream<List<UseModel>>? usersStream;
 
   @override
   void initState() {
     super.initState();
-    usersFuture = ApiService().fetchUsers();
+    usersStream = Stream.fromFuture(ApiService().fetchUsers());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Home Screen')),
-      body: FutureBuilder<List<UseModel>>(
-        future: usersFuture,
+      body: StreamBuilder<List<UseModel>>(
+        stream: usersStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
