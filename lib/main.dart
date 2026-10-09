@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sketch/core/api_service.dart';
+import 'package:sketch/core/network/api_service.dart';
+import 'package:sketch/features/posts/data/datasource/posts_remote_data_source.dart';
+import 'package:sketch/features/posts/data/repositories/posts_repository_impl.dart';
+import 'package:sketch/features/posts/doman/repositories/posts_repository.dart';
+import 'package:sketch/features/posts/doman/usecases/get_posts.dart';
+import 'package:sketch/features/posts/presentation/posts/posts_bloc.dart';
+import 'package:sketch/features/posts/presentation/screens/home_screen.dart';
 import 'package:sketch/home_screen.dart';
-import 'package:sketch/state/user/user_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
-  runApp(const MyApp());
+  final apiService = ApiService();
+  final remoteDataSource = PostsRemoteDataSourceImpl(apiService);
+  final repository = PostsRepositoryImpl(remoteDataSource);
+  final getPosts = GetPosts(repository);
+  runApp(MyApp(getPosts: getPosts));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final GetPosts getPosts;
+  const MyApp({super.key, required this.getPosts});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => UserBloc(apiService: ApiService()),
+      create: (context) => PostsBloc(getPosts: getPosts),
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
