@@ -1,41 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sketch/core/api_service.dart';
-import 'package:sketch/home_screen.dart';
-import 'package:sketch/state/user/user_bloc.dart';
+
+import 'core/network/api_service.dart';
+import 'features/albums/data/datasources/album_remote_data_source.dart';
+import 'features/albums/data/repositories/album_repository_impl.dart';
+import 'features/albums/domain/usecases/get_albums.dart';
+import 'features/albums/presentation/bloc/album_bloc.dart';
+import 'features/albums/presentation/bloc/album_event.dart';
+import 'home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  final apiService = ApiService();
+  final remoteDataSource = AlbumRemoteDataSourceImpl(apiService);
+  final repository = AlbumRepositoryImpl(remoteDataSource);
+  final getAlbums = GetAlbums(repository);
+
+  runApp(MyApp(getAlbums: getAlbums));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({required this.getAlbums, super.key});
 
-  // This widget is the root of your application.
+  final GetAlbums getAlbums;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => UserBloc(apiService: ApiService()),
+      create: (_) => AlbumBloc(getAlbums: getAlbums)..add(const AlbumsRequested()),
       child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          // This is the theme of your application.
-          //
-          // TRY THIS: Try running your application with "flutter run". You'll see
-          // the application has a purple toolbar. Then, without quitting the app,
-          // try changing the seedColor in the colorScheme below to Colors.green
-          // and then invoke "hot reload" (save your changes or press the "hot
-          // reload" button in a Flutter-supported IDE, or press "r" if you used
-          // the command line to start the app).
-          //
-          // Notice that the counter didn't reset back to zero; the application
-          // state is not lost during the reload. To reset the state, use hot
-          // restart instead.
-          //
-          // This works for code too, not just values: Most code changes can be
-          // tested with just a hot reload.
-          colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-        ),
+        title: 'Albums',
+        theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
         home: const HomeScreen(),
       ),
     );
