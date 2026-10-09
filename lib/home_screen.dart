@@ -1,36 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sketch/state/user/user_bloc.dart';
+import 'package:sketch/core/api_service.dart';
+import 'package:sketch/core/model/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
-  const new({super.key});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<UseModel>> usersFuture;
+
   @override
   void initState() {
     super.initState();
-    context.read<UserBloc>().add(const UsersFetched());
+    usersFuture = ApiService().fetchUsers();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Home Screen')),
-      body: BlocBuilder<UserBloc, UserState>(
-        builder: (context, state) {
-          if (state.status == UserStatus.loading) {
+      body: FutureBuilder<List<UseModel>>(
+        future: usersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state.status == UserStatus.failure) {
-            return Center(child: Text('Error: ${state.errorMessage}'));
-          } else if (state.status == UserStatus.success) {
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.hasData) {
+            final users = snapshot.data!;
+
             return ListView.builder(
-              itemCount: state.users.length,
+              itemCount: users.length,
               itemBuilder: (context, index) {
-                final user = state.users[index];
+                final user = users[index];
+
                 return ListTile(
                   title: Text(user.userId.toString()),
                   subtitle: Text(user.title.toString()),
@@ -38,10 +48,10 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             );
           }
-          return const Center(child: Text('Welcome to the Home Screen!'));
+
+          return const Center(child: Text('No users found'));
         },
       ),
     );
   }
 }
-//-----------
